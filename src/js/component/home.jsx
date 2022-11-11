@@ -2,83 +2,136 @@ import React, {useState, useEffect} from "react";
 
 //get the fetch from postman
 const Home = () => {
-	const [tasks, setTasks] = useState([]);
-	const [input, setInput] = useState(""); 
+
+	const [list, setlist] = useState([]); 
+	const [toDo, settoDo] = useState(""); 
 
 	useEffect(() => {
-		getList();
-	}, [])
-	
-	
-		const handleSubmit = (event) => {
-			event.preventDefault()
-			if (input != ""){
-				let addTask = {
-					id: Math.floor(Math.random() * 1000),
-					text: input,
-					completed: false
-				}
-				console.log(tasks)
-				setTasks([...tasks, addTask])
-				addTask(addTask)
-				console.log(tasks)
-				setInput("")
+		fetch("https://assets.breatheco.de/apis/fake/todos/user/jesse", {
+			method: "POST",
+			body: JSON.stringify([]),
+			headers: {
+				"Content-Type": "application/json"
 			}
-		} 
-	
-	const getList = () => {
-		fetch("https://assets.breatheco.de/apis/fake/todos/user/jesse")
-		.then((response => response.json()))
-		.then((result => setTasks(result)))
-		.catch((error) => console.log("error", error))
-	}
+		})
+			.then(resp => {
+				console.log("response", resp);
 
+				fetch(
+					"https://assets.breatheco.de/apis/fake/todos/user/jesse",
+					{
+						method: "GET",
 
-  const addTask = (myTask) => {          
-	const newList = [...tasks, myTask]
-	fetch("https://assets.breatheco.de/apis/fake/todos/user/jesse",{
-		method: 'PUT', 
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify(newList),
-		redirect: 'follow'
-	})
-		.then(response => response.json())
-		.then(result => getList())
-		.catch((error) => console.log("error", error));
-  }  
+						headers: {
+							"Content-Type": "application/json"
+						}
+					}
+				)
+					.then(resp => {
+						console.log("response", resp);
+						return resp.json();
+					})
+					.then(data => {
+						setlist(data);
+					})
 
-    console.log(tasks)
+					.catch(err => {
+						console.log("error", err);
+					});
+			})
 
+			.catch(err => {
+				console.log("error", err);
+			});
+	}, []);
+	const addToList = homework => {
+		setlist([...list, { label: homework, done: false }]);
+		settoDo("");
+	};
+
+	const delHW = pos => {
+		const tempList = [...list];
+		console.log("Erased", tempList);
+		tempList.splice(pos, 1);
+		console.log("Temporary list", tempList);
+		const methods = ["PUT", "DELETE"];
+		if (tempList.length > 0) {
+			fetch(
+				"https://assets.breatheco.de/apis/fake/todos/user/jesse",
+				{
+					method: methods[0],
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify(tempList)
+				}
+			)
+				.then(resp => {
+					console.log("Deleted Response", resp);
+					setlist(tempList);
+					console.log(list);
+				})
+				.catch(error => {
+					console.log("Error delete", error);
+				});
+		} else {
+			fetch(
+				"https://assets.breatheco.de/apis/fake/todos/user/jesse",
+				{
+					method: methods[1],
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify(tempList)
+				}
+			);
+		}
+	};
+
+	const addtoDo = toDo => {
+		settoDo(toDo);
+	};
+
+	const removeTask = i => {
+		var newtask = list.filter((_, index) => index != i);
+		setlist(newtask);
+	};
+
+	const validateInput = () => {
+		if (toDo === "") alert("The input cannot be empty");
+		else addToList(toDo);
+	};
 	return (
-		<div className="text-center">
-			<h1 className="todo">todos</h1>
-			<div className="list-card">
-				<form onSubmit={handleSubmit}>
-					<input 
-						type="text" 
-						value={input}
-						onChange={event => setInput(event.target.value)}
-						className="input-box"
-						placeholder="No tasks, add a task"
-						/>
-				</form>
-				<div className="list-items">
-					{tasks.map((x)=>(
-							<div className="todo" key={x.id}>
-								<p>{x?.label}
-								 	<button 
-										className="button" 
-								 		onClick={ () => deleteTask(x.id) }>
-											&#10060;
-									</button>
-								</p>
-						    </div>
-						)
-					)}
-						{/* <p className="counter">{ tasks.length > 0 ? "one task left" : `task left : ${tasks.length}`}</p> */}
-				</div>
+		<div>
+			<div>
+				<h2>To Do List</h2>
+			</div>
+
+			<div className="form-inline">
+				<input
+					className="form-control"
+					type="text"
+					placeholder="Add List"
+					onChange={e => addtoDo(e.target.value)}
+					value={toDo}></input>
+				<button
+					className="btn btn-info"
+					type="submit"
+					onClick={validateInput}>
+					Add Task
+				</button>
+			</div>
+			<div>
+				<ul className="list-group">
+					{list.map((element, i) => (
+						<li
+							className="list-group-item"
+							key={i}
+							onClick={() => removeTask(i)}>
+							{element.label}
+						</li>
+					))}
+				</ul>
 			</div>
 		</div>
 	);
