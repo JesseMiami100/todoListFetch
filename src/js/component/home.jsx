@@ -6,10 +6,40 @@ const Home = () => {
 	const [list, setlist] = useState([]); 
 	const [toDo, settoDo] = useState(""); 
 
+	const getData = () => {
+		fetch(
+			"https://assets.breatheco.de/apis/fake/todos/user/jesse",
+			{
+				method: "GET",
+
+				headers: {
+					"Content-Type": "application/json"
+				}
+			}
+		)
+			.then(resp => {
+				console.log("response", resp);
+				return resp.json();
+			})
+			.then(data => {
+				setlist(data);
+			})
+
+			.catch(err => {
+				console.log("error", err);
+			});
+	} 
+
 	useEffect(() => {
+		getData()
+		
+	}, []);
+
+	const addToList = homework => {
+		setlist([...list, { label: homework, done: false }]);
 		fetch("https://assets.breatheco.de/apis/fake/todos/user/jesse", {
-			method: "POST",
-			body: JSON.stringify([]),
+			method: "PUT",
+			body: JSON.stringify(list),
 			headers: {
 				"Content-Type": "application/json"
 			}
@@ -17,53 +47,27 @@ const Home = () => {
 			.then(resp => {
 				console.log("response", resp);
 
-				fetch(
-					"https://assets.breatheco.de/apis/fake/todos/user/jesse",
-					{
-						method: "GET",
-
-						headers: {
-							"Content-Type": "application/json"
-						}
-					}
-				)
-					.then(resp => {
-						console.log("response", resp);
-						return resp.json();
-					})
-					.then(data => {
-						setlist(data);
-					})
-
-					.catch(err => {
-						console.log("error", err);
-					});
+				
 			})
 
 			.catch(err => {
 				console.log("error", err);
 			});
-	}, []);
-	const addToList = homework => {
-		setlist([...list, { label: homework, done: false }]);
+
 		settoDo("");
 	};
 
 	const delHW = pos => {
-		const tempList = [...list];
-		console.log("Erased", tempList);
-		tempList.splice(pos, 1);
-		console.log("Temporary list", tempList);
-		const methods = ["PUT", "DELETE"];
-		if (tempList.length > 0) {
+		
+		
 			fetch(
 				"https://assets.breatheco.de/apis/fake/todos/user/jesse",
 				{
-					method: methods[0],
+					method: "PUT",
 					headers: {
 						"Content-Type": "application/json"
 					},
-					body: JSON.stringify(tempList)
+					body: JSON.stringify(pos)
 				}
 			)
 				.then(resp => {
@@ -74,18 +78,6 @@ const Home = () => {
 				.catch(error => {
 					console.log("Error delete", error);
 				});
-		} else {
-			fetch(
-				"https://assets.breatheco.de/apis/fake/todos/user/jesse",
-				{
-					method: methods[1],
-					headers: {
-						"Content-Type": "application/json"
-					},
-					body: JSON.stringify(tempList)
-				}
-			);
-		}
 	};
 
 	const addtoDo = toDo => {
@@ -95,6 +87,7 @@ const Home = () => {
 	const removeTask = i => {
 		var newtask = list.filter((_, index) => index != i);
 		setlist(newtask);
+		delHW(newtask)	
 	};
 
 	const validateInput = () => {
@@ -117,7 +110,10 @@ const Home = () => {
 				<button
 					className="btn btn-info"
 					type="submit"
-					onClick={validateInput}>
+					onClick={(event)=>{
+						event.preventDefault()
+						validateInput()
+					}}>
 					Add Task
 				</button>
 			</div>
